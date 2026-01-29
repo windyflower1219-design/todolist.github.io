@@ -113,7 +113,10 @@
             .sub-task-item {
                 max-width: 100%;
                 font-size: 0.9rem;
-                padding: 6px 10px;
+                padding: 8px 10px;
+                white-space: nowrap;
+                /* 한 줄 표시 보장 */
+                overflow: hidden;
             }
 
             .sub-task-input-group {
@@ -331,6 +334,8 @@
             max-width: 90%;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
             transition: all 0.2s;
+            overflow: hidden;
+            /* 넘치는 내용 숨김 */
         }
 
         .sub-task-item:hover {
@@ -641,7 +646,11 @@
                                         flex: 1,
                                         textDecoration: st.completed ? 'line-through' : 'none',
                                         opacity: st.completed ? 0.6 : 1,
-                                        transition: 'all 0.2s'
+                                        transition: 'all 0.2s',
+                                        whiteSpace: 'nowrap',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        marginRight: '8px'
                                     }}>
                                         {st.text}
                                     </span>
