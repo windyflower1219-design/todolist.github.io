@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-do List</title>
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#667eea">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <!-- React and Babel CDN -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script>
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW registered!', reg))
+                    .catch(err => console.log('SW registration failed:', err));
+            });
+        }
+    </script>
+    <!-- Google Fonts: Gamja Flower for an even cuter, handwritten look -->
+    <link href="https://fonts.googleapis.com/css2?family=Gamja+Flower&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --glass-bg: rgba(255, 255, 255, 0.9);
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --danger: #ef4444;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Gamja Flower', cursive;
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #root {
+            width: 100%;
+            max-width: 450px;
+            padding: 20px;
+        }
+
+        .todo-container {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        /* Responsive adjustments for mobile */
+        @media (max-width: 480px) {
+            #root {
+                padding: 12px;
+            }
+
+            .todo-container {
+                padding: 24px 20px;
+                border-radius: 20px;
+            }
+
+            h1 {
+                font-size: 1.6rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .input-group {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .add-btn {
+                padding: 14px;
+                width: 100%;
+            }
+
+            .todo-item {
+                padding: 14px 16px;
+                font-size: 0.95rem;
+            }
+
+            .todo-checkbox {
+                left: 14px;
+            }
+
+            .delete-btn {
+                right: 8px;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            color: var(--text-main);
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        input {
+            flex: 1;
+            padding: 14px 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+        }
+
+        .add-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 0 24px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .add-btn:hover {
+            background: var(--primary-hover);
+        }
+
+        .add-btn:active {
+            transform: scale(0.95);
+        }
+
+        .todo-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .todo-item {
+            display: flex;
+            align-items: center;
+            padding: 16px 20px;
+            background: white;
+            margin-bottom: 12px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s, opacity 0.2s;
+            animation: slideIn 0.3s ease-out;
+            position: relative;
+        }
+
+        .todo-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .todo-checkbox {
+            position: absolute;
+            left: 20px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: var(--primary);
+            margin: 0;
+            z-index: 2;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .todo-text {
+            color: var(--text-main);
+            font-weight: 500;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .todo-text.completed {
+            text-decoration: line-through;
+            color: var(--text-muted);
+            opacity: 0.6;
+        }
+
+        .delete-btn {
+            position: absolute;
+            right: 12px;
+            background: transparent;
+            color: var(--text-muted);
+            border: none;
+            padding: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            border-radius: 8px;
+            transition: all 0.2s;
+            z-index: 2;
+        }
+
+        .delete-btn:hover {
+            color: var(--danger);
+            background: #fee2e2;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--text-muted);
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        function App() {
+            const [todos, setTodos] = useState([
+                { id: 1, text: '리액트 공부하기', completed: false },
+                { id: 2, text: '투두 앱 완성하기', completed: true }
+            ]);
+            const [inputValue, setInputValue] = useState('');
+
+            const addTodo = () => {
+                if (inputValue.trim() === '') return;
+
+                const newTodo = {
+                    id: Date.now(),
+                    text: inputValue,
+                    completed: false
+                };
+
+                setTodos([...todos, newTodo]);
+                setInputValue('');
+            };
+
+            const deleteTodo = (id) => {
+                setTodos(todos.filter(todo => todo.id !== id));
+            };
+
+            const toggleTodo = (id) => {
+                setTodos(todos.map(todo =>
+                    todo.id === id ? { ...todo, completed: !todo.completed } : todo
+                ));
+            };
+
+            const handleKeyPress = (e) => {
+                if (e.key === 'Enter') {
+                    addTodo();
+                }
+            };
+
+            return (
+                <div className="todo-container">
+                    <h1>To-do List</h1>
+                    <div className="input-group">
+                        <input
+                            type="text"
+                            placeholder="할 일을 입력하세요..."
+                            value={inputValue}
+                            onChange={(e) => setInputValue(e.target.value)}
+                            onKeyPress={handleKeyPress}
+                        />
+                        <button className="add-btn" onClick={addTodo}>추가</button>
+                    </div>
+
+                    <ul className="todo-list">
+                        {todos.map(todo => (
+                            <li key={todo.id} className="todo-item">
+                                <div className="todo-content" onClick={() => toggleTodo(todo.id)}>
+                                    <input
+                                        type="checkbox"
+                                        className="todo-checkbox"
+                                        checked={todo.completed}
+                                        onChange={() => { }} // onClick for parent div handles this
+                                    />
+                                    <span className={`todo-text ${todo.completed ? 'completed' : ''}`}>
+                                        {todo.text}
+                                    </span>
+                                </div>
+                                <button
+                                    className="delete-btn"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        deleteTodo(todo.id);
+                                    }}
+                                >
+                                    삭제
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+
+                    {todos.length === 0 && (
+                        <div className="empty-state">
+                            모든 할 일을 마쳤습니다! ✨
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>
