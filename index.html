@@ -104,6 +104,21 @@
             .delete-btn {
                 right: 8px;
             }
+
+            .sub-tasks-container {
+                margin-left: 10px;
+                padding-left: 15px;
+            }
+
+            .sub-task-item {
+                max-width: 100%;
+                font-size: 0.9rem;
+                padding: 6px 10px;
+            }
+
+            .sub-task-input-group {
+                max-width: 100%;
+            }
         }
 
         @keyframes fadeIn {
@@ -384,13 +399,14 @@
             const [todos, setTodos] = useState(() => {
                 const saved = localStorage.getItem('todo_items');
                 return saved ? JSON.parse(saved) : [
-                    { id: 1, text: '리액트 공부하기', completed: false, subTasks: [] },
+                    { id: 1, text: '안티그래비티 공부하기', completed: false, subTasks: [] },
                     { id: 2, text: '투두 앱 완성하기', completed: true, subTasks: [] }
                 ];
             });
 
             const [inputValue, setInputValue] = useState('');
             const [draggingIndex, setDraggingIndex] = useState(null);
+            const [draggingSubTask, setDraggingSubTask] = useState(null); // { parentId, stId }
 
             // Save to LocalStorage whenever todos change
             useEffect(() => {
@@ -478,6 +494,35 @@
 
             const handleDragEnd = () => {
                 setDraggingIndex(null);
+                setDraggingSubTask(null);
+            };
+
+            const handleSubTaskDragStart = (e, parentId, stId) => {
+                setDraggingSubTask({ parentId, stId });
+                e.dataTransfer.effectAllowed = 'move';
+                e.stopPropagation(); // Prevent main task drag
+            };
+
+            const handleSubTaskDrop = (targetParentId) => {
+                if (!draggingSubTask) return;
+                const { parentId: sourceParentId, stId } = draggingSubTask;
+                if (sourceParentId === targetParentId) return;
+
+                const sourceTodo = todos.find(t => t.id === sourceParentId);
+                const subTaskToMove = sourceTodo.subTasks.find(st => st.id === stId);
+
+                const newTodos = todos.map(todo => {
+                    if (todo.id === sourceParentId) {
+                        return { ...todo, subTasks: todo.subTasks.filter(st => st.id !== stId) };
+                    }
+                    if (todo.id === targetParentId) {
+                        return { ...todo, subTasks: [...todo.subTasks, subTaskToMove] };
+                    }
+                    return todo;
+                });
+
+                setTodos(newTodos);
+                setDraggingSubTask(null);
             };
 
             return (
@@ -509,6 +554,8 @@
                                 onDragStart={(e) => handleDragStart(e, index)}
                                 onDragOver={(e) => handleDragOver(e, index)}
                                 onDragEnd={handleDragEnd}
+                                onSubTaskDragStart={(e, stId) => handleSubTaskDragStart(e, todo.id, stId)}
+                                onSubTaskDrop={() => handleSubTaskDrop(todo.id)}
                             />
                         ))}
                     </div>
@@ -525,19 +572,26 @@
         function TodoItem({
             todo, index, isDragging, onToggle, onDelete,
             onAddSubTask, onToggleSubTask, onDeleteSubTask,
-            onDragStart, onDragOver, onDragEnd
+            onDragStart, onDragOver, onDragEnd,
+            onSubTaskDragStart, onSubTaskDrop
         }) {
             const [subInput, setSubInput] = useState('');
             const [showSubInput, setShowSubInput] = useState(false);
+
+            const handleDrop = (e) => {
+                e.preventDefault();
+                onSubTaskDrop();
+            };
 
             return (
                 <div
                     className={`todo-item-wrapper ${isDragging ? 'dragging' : ''}`}
                     onDragOver={onDragOver}
+                    onDrop={handleDrop}
                 >
                     <div
                         className="todo-item"
-                        draggable
+                        draggable={!showSubInput}
                         onDragStart={onDragStart}
                         onDragEnd={onDragEnd}
                     >
@@ -566,7 +620,14 @@
                     {todo.subTasks.length > 0 && (
                         <div className="sub-tasks-container">
                             {todo.subTasks.map(st => (
-                                <div key={st.id} className="sub-task-item" onClick={() => onToggleSubTask(st.id)} style={{ cursor: 'pointer' }}>
+                                <div
+                                    key={st.id}
+                                    className="sub-task-item"
+                                    onClick={() => onToggleSubTask(st.id)}
+                                    style={{ cursor: 'pointer' }}
+                                    draggable
+                                    onDragStart={(e) => onSubTaskDragStart(e, st.id)}
+                                >
                                     <input
                                         type="checkbox"
                                         checked={st.completed}
