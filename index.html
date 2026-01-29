@@ -111,12 +111,12 @@
             }
 
             .sub-task-item {
-                max-width: 100%;
+                width: 100%;
                 font-size: 0.9rem;
-                padding: 8px 10px;
-                white-space: nowrap;
-                /* 한 줄 표시 보장 */
-                overflow: hidden;
+                padding: 8px 10px 8px 6px;
+                /* 왼쪽 패딩 축소 */
+                white-space: normal;
+                word-break: break-all;
             }
 
             .sub-task-input-group {
@@ -143,6 +143,24 @@
             text-align: center;
             font-weight: 700;
             letter-spacing: -0.5px;
+            position: relative;
+        }
+
+        .reset-data-btn {
+            position: absolute;
+            right: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            opacity: 0.3;
+            transition: opacity 0.2s;
+        }
+
+        .reset-data-btn:hover {
+            opacity: 1;
         }
 
         .input-group {
@@ -151,7 +169,7 @@
             margin-bottom: 24px;
         }
 
-        input {
+        input[type="text"] {
             flex: 1;
             padding: 14px 20px;
             border: 2px solid #e5e7eb;
@@ -162,7 +180,7 @@
             transition: border-color 0.2s;
         }
 
-        input:focus {
+        input[type="text"]:focus {
             border-color: var(--primary);
         }
 
@@ -323,19 +341,34 @@
 
         .sub-task-item {
             display: flex;
-            align-items: center;
-            padding: 8px 14px;
+            align-items: flex-start;
+            padding: 10px 14px;
             background: rgba(255, 255, 255, 0.7);
             border-radius: 10px;
             margin-bottom: 6px;
             font-size: 0.95rem;
-            width: fit-content;
-            /* 내용에 맞게 너비 조절 */
-            max-width: 90%;
+            width: 100%;
+            box-sizing: border-box;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
             transition: all 0.2s;
-            overflow: hidden;
-            /* 넘치는 내용 숨김 */
+            white-space: normal;
+            word-break: break-all;
+            position: relative;
+            padding-left: 42px;
+            /* 체크박스 공간 확보 */
+        }
+
+        .sub-task-checkbox {
+            position: absolute;
+            left: 14px;
+            /* 사용자가 지정한 왼쪽 끝 위치 */
+            top: 13px;
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: var(--primary);
+            margin: 0 !important;
+            padding: 0 !important;
         }
 
         .sub-task-item:hover {
@@ -530,9 +563,19 @@
                 setDraggingSubTask(null);
             };
 
+            const resetData = () => {
+                if (confirm("모든 데이터를 초기화하고 기본 목록으로 돌아갈까요?")) {
+                    localStorage.removeItem('todo_items');
+                    window.location.reload();
+                }
+            };
+
             return (
                 <div className="todo-container">
-                    <h1>To-do List</h1>
+                    <h1>
+                        To-do List
+                        <button className="reset-data-btn" onClick={resetData} title="데이터 초기화">🔄</button>
+                    </h1>
                     <div className="input-group">
                         <input
                             type="text"
@@ -635,12 +678,12 @@
                                 >
                                     <input
                                         type="checkbox"
+                                        className="sub-task-checkbox"
                                         checked={st.completed}
                                         onChange={(e) => {
                                             e.stopPropagation();
                                             onToggleSubTask(st.id);
                                         }}
-                                        style={{ marginRight: '8px', cursor: 'pointer' }}
                                     />
                                     <span style={{
                                         flex: 1,
@@ -648,8 +691,9 @@
                                         opacity: st.completed ? 0.6 : 1,
                                         transition: 'all 0.2s',
                                         whiteSpace: 'normal', /* 줄바꿈 허용 */
-                                        wordBreak: 'break-all', /* 긴 단어도 줄바꿈 */
-                                        marginRight: '8px'
+                                        wordBreak: 'break-all',
+                                        marginRight: '8px',
+                                        lineHeight: '1.4'
                                     }}>
                                         {st.text}
                                     </span>
