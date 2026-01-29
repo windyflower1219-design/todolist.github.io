@@ -38,6 +38,7 @@
             --text-main: #1f2937;
             --text-muted: #6b7280;
             --danger: #ef4444;
+            --sub-task-bg: rgba(99, 102, 241, 0.05);
         }
 
         body {
@@ -53,7 +54,7 @@
 
         #root {
             width: 100%;
-            max-width: 450px;
+            max-width: 500px;
             padding: 20px;
         }
 
@@ -61,7 +62,7 @@
             background: var(--glass-bg);
             backdrop-filter: blur(10px);
             border-radius: 24px;
-            padding: 40px;
+            padding: 30px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
             animation: fadeIn 0.6s ease-out;
         }
@@ -73,7 +74,7 @@
             }
 
             .todo-container {
-                padding: 24px 20px;
+                padding: 20px 15px;
                 border-radius: 20px;
             }
 
@@ -93,8 +94,7 @@
             }
 
             .todo-item {
-                padding: 14px 16px;
-                font-size: 0.95rem;
+                padding: 12px 10px;
             }
 
             .todo-checkbox {
@@ -120,10 +120,11 @@
 
         h1 {
             color: var(--text-main);
-            font-size: 2rem;
+            font-size: 2.2rem;
             margin-bottom: 2rem;
             text-align: center;
             font-weight: 700;
+            letter-spacing: -0.5px;
         }
 
         .input-group {
@@ -137,7 +138,8 @@
             padding: 14px 20px;
             border: 2px solid #e5e7eb;
             border-radius: 12px;
-            font-size: 1rem;
+            font-size: 1.1rem;
+            font-family: inherit;
             outline: none;
             transition: border-color 0.2s;
         }
@@ -153,12 +155,14 @@
             border-radius: 12px;
             padding: 0 24px;
             font-weight: 600;
+            font-family: inherit;
             cursor: pointer;
-            transition: background 0.2s, transform 0.1s;
+            transition: all 0.2s;
         }
 
         .add-btn:hover {
             background: var(--primary-hover);
+            transform: translateY(-2px);
         }
 
         .add-btn:active {
@@ -171,32 +175,45 @@
             margin: 0;
         }
 
+        .todo-item-wrapper {
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+        }
+
         .todo-item {
             display: flex;
             align-items: center;
-            padding: 16px 20px;
+            padding: 14px 18px;
             background: white;
-            margin-bottom: 12px;
             border-radius: 12px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            transition: transform 0.2s, opacity 0.2s;
-            animation: slideIn 0.3s ease-out;
             position: relative;
+            cursor: grab;
+            transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+        }
+
+        .todo-item:active {
+            cursor: grabbing;
+        }
+
+        .todo-item.dragging {
+            opacity: 0.3;
+            transform: scale(0.98);
         }
 
         .todo-content {
             display: flex;
             align-items: center;
-            justify-content: center;
-            width: 100%;
+            flex: 1;
+            margin: 0 40px;
             cursor: pointer;
         }
 
         .todo-checkbox {
             position: absolute;
-            left: 20px;
-            width: 20px;
-            height: 20px;
+            left: 18px;
+            width: 22px;
+            height: 22px;
             cursor: pointer;
             accent-color: var(--primary);
             margin: 0;
@@ -217,9 +234,11 @@
 
         .todo-text {
             color: var(--text-main);
+            font-size: 1.1rem;
             font-weight: 500;
             transition: all 0.2s;
             text-align: center;
+            user-select: none;
         }
 
         .todo-text.completed {
@@ -228,29 +247,128 @@
             opacity: 0.6;
         }
 
-        .delete-btn {
+        .action-buttons {
             position: absolute;
-            right: 12px;
-            background: transparent;
-            color: var(--text-muted);
-            border: none;
-            padding: 8px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            border-radius: 8px;
-            transition: all 0.2s;
+            right: 8px;
+            display: flex;
+            gap: 4px;
             z-index: 2;
         }
 
-        .delete-btn:hover {
-            color: var(--danger);
+        .icon-btn {
+            background: transparent;
+            border: none;
+            padding: 6px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon-btn:hover {
+            background: #f3f4f6;
+            color: var(--primary);
+        }
+
+        .icon-btn.delete:hover {
             background: #fee2e2;
+            color: var(--danger);
+        }
+
+        /* Sub-tasks styles */
+        .sub-tasks-container {
+            margin-left: 20px;
+            margin-top: 10px;
+            padding-left: 20px;
+            border-left: 2px solid #f3f4f6;
+            animation: slideDown 0.3s ease-out;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            /* 하위 항목들을 왼쪽으로 정렬 */
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .sub-task-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 14px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 10px;
+            margin-bottom: 6px;
+            font-size: 0.95rem;
+            width: fit-content;
+            /* 내용에 맞게 너비 조절 */
+            max-width: 90%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+            transition: all 0.2s;
+        }
+
+        .sub-task-item:hover {
+            background: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .sub-task-input-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            width: 100%;
+            max-width: 350px;
+        }
+
+        .sub-task-input {
+            flex: 1;
+            padding: 10px 14px;
+            font-size: 0.9rem;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+            font-family: inherit;
+            outline: none;
+            transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .sub-add-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 0 12px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.85rem;
+        }
+
+        .sub-add-btn:hover {
+            background: var(--primary-hover);
+        }
+
+        .sub-task-input:focus {
+            border-color: var(--primary);
         }
 
         .empty-state {
             text-align: center;
             color: var(--text-muted);
             margin-top: 2rem;
+            font-size: 1.2rem;
         }
     </style>
 </head>
@@ -259,24 +377,34 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState } = React;
+        const { useState, useRef, useEffect } = React;
 
         function App() {
-            const [todos, setTodos] = useState([
-                { id: 1, text: '리액트 공부하기', completed: false },
-                { id: 2, text: '투두 앱 완성하기', completed: true }
-            ]);
+            // Load from LocalStorage
+            const [todos, setTodos] = useState(() => {
+                const saved = localStorage.getItem('todo_items');
+                return saved ? JSON.parse(saved) : [
+                    { id: 1, text: '리액트 공부하기', completed: false, subTasks: [] },
+                    { id: 2, text: '투두 앱 완성하기', completed: true, subTasks: [] }
+                ];
+            });
+
             const [inputValue, setInputValue] = useState('');
+            const [draggingIndex, setDraggingIndex] = useState(null);
+
+            // Save to LocalStorage whenever todos change
+            useEffect(() => {
+                localStorage.setItem('todo_items', JSON.stringify(todos));
+            }, [todos]);
 
             const addTodo = () => {
                 if (inputValue.trim() === '') return;
-
                 const newTodo = {
                     id: Date.now(),
                     text: inputValue,
-                    completed: false
+                    completed: false,
+                    subTasks: []
                 };
-
                 setTodos([...todos, newTodo]);
                 setInputValue('');
             };
@@ -291,10 +419,65 @@
                 ));
             };
 
-            const handleKeyPress = (e) => {
-                if (e.key === 'Enter') {
-                    addTodo();
-                }
+            const addSubTask = (parentId, text) => {
+                if (!text.trim()) return;
+                setTodos(todos.map(todo => {
+                    if (todo.id === parentId) {
+                        return {
+                            ...todo,
+                            subTasks: [...todo.subTasks, { id: Date.now(), text, completed: false }]
+                        };
+                    }
+                    return todo;
+                }));
+            };
+
+            const toggleSubTask = (parentId, subTaskId) => {
+                setTodos(todos.map(todo => {
+                    if (todo.id === parentId) {
+                        return {
+                            ...todo,
+                            subTasks: todo.subTasks.map(st =>
+                                st.id === subTaskId ? { ...st, completed: !st.completed } : st
+                            )
+                        };
+                    }
+                    return todo;
+                }));
+            };
+
+            const deleteSubTask = (parentId, subTaskId) => {
+                setTodos(todos.map(todo => {
+                    if (todo.id === parentId) {
+                        return {
+                            ...todo,
+                            subTasks: todo.subTasks.filter(st => st.id !== subTaskId)
+                        };
+                    }
+                    return todo;
+                }));
+            };
+
+            // Drag and Drop
+            const handleDragStart = (e, index) => {
+                setDraggingIndex(index);
+                e.dataTransfer.effectAllowed = 'move';
+            };
+
+            const handleDragOver = (e, index) => {
+                e.preventDefault();
+                if (draggingIndex === null || draggingIndex === index) return;
+
+                const newTodos = [...todos];
+                const item = newTodos.splice(draggingIndex, 1)[0];
+                newTodos.splice(index, 0, item);
+
+                setDraggingIndex(index);
+                setTodos(newTodos);
+            };
+
+            const handleDragEnd = () => {
+                setDraggingIndex(null);
             };
 
             return (
@@ -303,44 +486,147 @@
                     <div className="input-group">
                         <input
                             type="text"
-                            placeholder="할 일을 입력하세요..."
+                            placeholder="오늘의 할 일은?"
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
-                            onKeyPress={handleKeyPress}
+                            onKeyPress={(e) => e.key === 'Enter' && addTodo()}
                         />
                         <button className="add-btn" onClick={addTodo}>추가</button>
                     </div>
 
-                    <ul className="todo-list">
-                        {todos.map(todo => (
-                            <li key={todo.id} className="todo-item">
-                                <div className="todo-content" onClick={() => toggleTodo(todo.id)}>
-                                    <input
-                                        type="checkbox"
-                                        className="todo-checkbox"
-                                        checked={todo.completed}
-                                        onChange={() => { }} // onClick for parent div handles this
-                                    />
-                                    <span className={`todo-text ${todo.completed ? 'completed' : ''}`}>
-                                        {todo.text}
-                                    </span>
-                                </div>
-                                <button
-                                    className="delete-btn"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        deleteTodo(todo.id);
-                                    }}
-                                >
-                                    삭제
-                                </button>
-                            </li>
+                    <div className="todo-list">
+                        {todos.map((todo, index) => (
+                            <TodoItem
+                                key={todo.id}
+                                todo={todo}
+                                index={index}
+                                isDragging={draggingIndex === index}
+                                onToggle={() => toggleTodo(todo.id)}
+                                onDelete={() => deleteTodo(todo.id)}
+                                onAddSubTask={(text) => addSubTask(todo.id, text)}
+                                onToggleSubTask={(stId) => toggleSubTask(todo.id, stId)}
+                                onDeleteSubTask={(stId) => deleteSubTask(todo.id, stId)}
+                                onDragStart={(e) => handleDragStart(e, index)}
+                                onDragOver={(e) => handleDragOver(e, index)}
+                                onDragEnd={handleDragEnd}
+                            />
                         ))}
-                    </ul>
+                    </div>
 
                     {todos.length === 0 && (
                         <div className="empty-state">
-                            모든 할 일을 마쳤습니다! ✨
+                            자유 시간이에요! 🎈
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        function TodoItem({
+            todo, index, isDragging, onToggle, onDelete,
+            onAddSubTask, onToggleSubTask, onDeleteSubTask,
+            onDragStart, onDragOver, onDragEnd
+        }) {
+            const [subInput, setSubInput] = useState('');
+            const [showSubInput, setShowSubInput] = useState(false);
+
+            return (
+                <div
+                    className={`todo-item-wrapper ${isDragging ? 'dragging' : ''}`}
+                    onDragOver={onDragOver}
+                >
+                    <div
+                        className="todo-item"
+                        draggable
+                        onDragStart={onDragStart}
+                        onDragEnd={onDragEnd}
+                    >
+                        <input
+                            type="checkbox"
+                            className="todo-checkbox"
+                            checked={todo.completed}
+                            onChange={onToggle}
+                        />
+                        <div className="todo-content" onClick={onToggle}>
+                            <span className={`todo-text ${todo.completed ? 'completed' : ''}`}>
+                                {todo.text}
+                            </span>
+                        </div>
+                        <div className="action-buttons">
+                            <button className="icon-btn" onClick={() => setShowSubInput(!showSubInput)} title="하위 추가">
+                                ➕
+                            </button>
+                            <button className="icon-btn delete" onClick={onDelete} title="삭제">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Sub-tasks List */}
+                    {todo.subTasks.length > 0 && (
+                        <div className="sub-tasks-container">
+                            {todo.subTasks.map(st => (
+                                <div key={st.id} className="sub-task-item" onClick={() => onToggleSubTask(st.id)} style={{ cursor: 'pointer' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={st.completed}
+                                        onChange={(e) => {
+                                            e.stopPropagation();
+                                            onToggleSubTask(st.id);
+                                        }}
+                                        style={{ marginRight: '8px', cursor: 'pointer' }}
+                                    />
+                                    <span style={{
+                                        flex: 1,
+                                        textDecoration: st.completed ? 'line-through' : 'none',
+                                        opacity: st.completed ? 0.6 : 1,
+                                        transition: 'all 0.2s'
+                                    }}>
+                                        {st.text}
+                                    </span>
+                                    <button
+                                        className="icon-btn delete"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onDeleteSubTask(st.id);
+                                        }}
+                                        style={{ padding: '2px' }}
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Sub-task Input */}
+                    {showSubInput && (
+                        <div className="sub-task-input-group">
+                            <input
+                                type="text"
+                                className="sub-task-input"
+                                placeholder="조금 더 추가하면..."
+                                value={subInput}
+                                onChange={(e) => setSubInput(e.target.value)}
+                                onKeyPress={(e) => {
+                                    if (e.key === 'Enter') {
+                                        onAddSubTask(subInput);
+                                        setSubInput('');
+                                        setShowSubInput(false);
+                                    }
+                                }}
+                                autoFocus
+                            />
+                            <button
+                                className="sub-add-btn"
+                                onClick={() => {
+                                    onAddSubTask(subInput);
+                                    setSubInput('');
+                                    setShowSubInput(false);
+                                }}
+                            >
+                                추가
+                            </button>
                         </div>
                     )}
                 </div>
