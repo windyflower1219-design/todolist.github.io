@@ -647,9 +647,8 @@
                                         textDecoration: st.completed ? 'line-through' : 'none',
                                         opacity: st.completed ? 0.6 : 1,
                                         transition: 'all 0.2s',
-                                        whiteSpace: 'nowrap',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'normal', /* 줄바꿈 허용 */
+                                        wordBreak: 'break-all', /* 긴 단어도 줄바꿈 */
                                         marginRight: '8px'
                                     }}>
                                         {st.text}
