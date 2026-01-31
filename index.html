@@ -136,31 +136,114 @@
             }
         }
 
-        h1 {
+        .todo-container h1 {
             color: var(--text-main);
             font-size: 2.2rem;
-            margin-bottom: 2rem;
-            text-align: center;
+            margin: 0;
             font-weight: 700;
             letter-spacing: -0.5px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: 8px;
+            padding: 4px 12px;
+            word-break: break-word;
+            /* Allow long titles to wrap */
+            min-width: 0;
+            /* Allow shrinking in flex/grid */
+            line-height: 1.2;
+        }
+
+        .todo-container h1:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .title-input {
+            font-size: 2.0rem;
+            /* Slightly smaller to fit border */
+            font-weight: 700;
+            text-align: center;
+            border: 2px solid var(--primary);
+            border-radius: 8px;
+            padding: 2px 10px;
+            font-family: inherit;
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.8);
+            width: 100%;
+            outline: none;
+            box-sizing: border-box;
+            min-width: 0;
+        }
+
+        .header-container {
+            display: flex;
+            flex-direction: column;
+            /* Stacked layout is much more stable for title + 5 buttons */
+            align-items: center;
+            margin-bottom: 2rem;
+            gap: 12px;
+            width: 100%;
             position: relative;
         }
 
-        .reset-data-btn {
-            position: absolute;
-            right: -10px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: transparent;
-            border: none;
-            font-size: 1rem;
-            cursor: pointer;
-            opacity: 0.3;
-            transition: opacity 0.2s;
+        .header-btn-group {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.4);
+            padding: 8px 20px;
+            border-radius: 24px;
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
         }
 
-        .reset-data-btn:hover {
+        .header-action-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 10px;
+            border-radius: 12px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            min-width: 60px;
+            color: var(--text-main);
+            opacity: 0.7;
+        }
+
+        .header-action-btn:hover:not(:disabled) {
+            background: rgba(0, 0, 0, 0.05);
             opacity: 1;
+            transform: translateY(-2px);
+        }
+
+        .header-action-btn:disabled {
+            opacity: 0.2;
+            cursor: not-allowed;
+            filter: grayscale(1);
+        }
+
+        .header-action-btn .icon {
+            font-size: 1.4rem;
+        }
+
+        .header-action-btn .label {
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        @media (min-width: 550px) {
+            /* If the container is very wide (though root is capped), we could try side-by-side */
+            /* But for PWA, center-stacked looks very clean */
+        }
+
+        .reset-data-btn {
+            display: none;
+            /* Removed in favor of header-action-btn */
         }
 
         .input-group {
@@ -425,6 +508,102 @@
             margin-top: 2rem;
             font-size: 1.2rem;
         }
+
+        /* Selection Toolbar */
+        .selection-toolbar {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            padding: 8px 16px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            align-items: center;
+            gap: 8px;
+            z-index: 1000;
+            animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            white-space: nowrap;
+            max-width: 95vw;
+            overflow-x: auto;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translate(-50%, 100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translate(-50%, 0);
+                opacity: 1;
+            }
+        }
+
+        .toolbar-btn {
+            background: white;
+            border: 1px solid #e5e7eb;
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.8rem;
+            color: var(--text-main);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .toolbar-btn:hover {
+            background: #f3f4f6;
+            transform: translateY(-1px);
+        }
+
+        .toolbar-btn.danger {
+            color: var(--danger);
+        }
+
+        .toolbar-btn.danger:hover {
+            background: #fef2f2;
+        }
+
+        .selection-check {
+            width: 18px;
+            height: 18px;
+            margin-right: 12px;
+            cursor: pointer;
+            accent-color: var(--primary);
+        }
+
+        .todo-item.selected {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+        }
+
+        .hidden-file-input {
+            display: none;
+        }
+
+        .clipboard-indicator {
+            background: #ecfdf5;
+            color: #059669;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
     </style>
 </head>
 
@@ -444,14 +623,67 @@
                 ];
             });
 
+            const [appTitle, setAppTitle] = useState(() => localStorage.getItem('todo_app_title') || 'To-do List');
+            const [isEditingTitle, setIsEditingTitle] = useState(false);
+            const [tempTitle, setTempTitle] = useState(appTitle);
+
             const [inputValue, setInputValue] = useState('');
             const [draggingIndex, setDraggingIndex] = useState(null);
             const [draggingSubTask, setDraggingSubTask] = useState(null); // { parentId, stId }
+
+            // Advanced Features State
+            const [selectedIds, setSelectedIds] = useState([]);
+            const [clipboard, setClipboard] = useState({ items: [], isCut: false });
+            const [isSelectionMode, setIsSelectionMode] = useState(false);
+            const fileInputRef = useRef(null);
+
+            // Undo/Redo State
+            const [history, setHistory] = useState([]);
+            const [redoStack, setRedoStack] = useState([]);
+
+            // Save state for undo
+            const saveState = (newTodos) => {
+                setHistory(prev => [...prev, todos]);
+                setRedoStack([]); // Clear redo stack on new action
+            };
+
+            const updateTodosWithSave = (newTodos) => {
+                saveState();
+                setTodos(newTodos);
+            };
+
+            // Keyboard Listeners
+            useEffect(() => {
+                const handleKeyDown = (e) => {
+                    if (e.ctrlKey && !e.shiftKey && e.key === 'z') {
+                        e.preventDefault();
+                        undo();
+                    } else if (e.ctrlKey && e.shiftKey && e.key === 'Z' || (e.ctrlKey && e.key === 'y')) {
+                        e.preventDefault();
+                        redo();
+                    }
+                };
+                window.addEventListener('keydown', handleKeyDown);
+                return () => window.removeEventListener('keydown', handleKeyDown);
+            }, [todos, history, redoStack]);
 
             // Save to LocalStorage whenever todos change
             useEffect(() => {
                 localStorage.setItem('todo_items', JSON.stringify(todos));
             }, [todos]);
+
+            useEffect(() => {
+                localStorage.setItem('todo_app_title', appTitle);
+            }, [appTitle]);
+
+            const saveTitle = () => {
+                if (tempTitle.trim()) {
+                    setAppTitle(tempTitle);
+                } else {
+                    setTempTitle(appTitle);
+                }
+                setIsEditingTitle(false);
+            };
 
             const addTodo = () => {
                 if (inputValue.trim() === '') return;
@@ -461,23 +693,23 @@
                     completed: false,
                     subTasks: []
                 };
-                setTodos([...todos, newTodo]);
+                updateTodosWithSave([...todos, newTodo]);
                 setInputValue('');
             };
 
             const deleteTodo = (id) => {
-                setTodos(todos.filter(todo => todo.id !== id));
+                updateTodosWithSave(todos.filter(todo => todo.id !== id));
             };
 
             const toggleTodo = (id) => {
-                setTodos(todos.map(todo =>
+                updateTodosWithSave(todos.map(todo =>
                     todo.id === id ? { ...todo, completed: !todo.completed } : todo
                 ));
             };
 
             const addSubTask = (parentId, text) => {
                 if (!text.trim()) return;
-                setTodos(todos.map(todo => {
+                updateTodosWithSave(todos.map(todo => {
                     if (todo.id === parentId) {
                         return {
                             ...todo,
@@ -489,7 +721,7 @@
             };
 
             const toggleSubTask = (parentId, subTaskId) => {
-                setTodos(todos.map(todo => {
+                updateTodosWithSave(todos.map(todo => {
                     if (todo.id === parentId) {
                         return {
                             ...todo,
@@ -503,7 +735,7 @@
             };
 
             const deleteSubTask = (parentId, subTaskId) => {
-                setTodos(todos.map(todo => {
+                updateTodosWithSave(todos.map(todo => {
                     if (todo.id === parentId) {
                         return {
                             ...todo,
@@ -515,13 +747,13 @@
             };
 
             const updateTodo = (id, newText) => {
-                setTodos(todos.map(todo =>
+                updateTodosWithSave(todos.map(todo =>
                     todo.id === id ? { ...todo, text: newText } : todo
                 ));
             };
 
             const updateSubTask = (parentId, subTaskId, newText) => {
-                setTodos(todos.map(todo => {
+                updateTodosWithSave(todos.map(todo => {
                     if (todo.id === parentId) {
                         return {
                             ...todo,
@@ -607,12 +839,172 @@
                 }
             };
 
+            // Undo/Redo Logic
+            const undo = () => {
+                if (history.length === 0) return;
+                const prev = history[history.length - 1];
+                setRedoStack(prevRedo => [...prevRedo, todos]);
+                setHistory(prevHistory => prevHistory.slice(0, -1));
+                setTodos(prev);
+            };
+
+            const redo = () => {
+                if (redoStack.length === 0) return;
+                const next = redoStack[redoStack.length - 1];
+                setHistory(prevHistory => [...prevHistory, todos]);
+                setRedoStack(prevRedo => prevRedo.slice(0, -1));
+                setTodos(next);
+            };
+
+            // Advanced Features Logic
+            const toggleSelect = (id) => {
+                setSelectedIds(prev =>
+                    prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+                );
+            };
+
+            const toggleSelectionMode = () => {
+                setIsSelectionMode(!isSelectionMode);
+                setSelectedIds([]);
+            };
+
+            const handleBulkDelete = () => {
+                if (selectedIds.length === 0) return;
+                if (confirm(`${selectedIds.length}개 항목을 삭제하시겠습니까?`)) {
+                    updateTodosWithSave(todos.filter(t => !selectedIds.includes(t.id)));
+                    setSelectedIds([]);
+                    setIsSelectionMode(false);
+                }
+            };
+
+            const handleCopy = (isCut = false) => {
+                const itemsToCopy = todos.filter(t => selectedIds.includes(t.id));
+                setClipboard({ items: itemsToCopy.map(item => ({ ...item })), isCut });
+                if (isCut) {
+                    updateTodosWithSave(todos.filter(t => !selectedIds.includes(t.id)));
+                }
+                setSelectedIds([]);
+                setIsSelectionMode(false);
+            };
+
+            const handlePaste = () => {
+                if (clipboard.items.length === 0) return;
+                const newItems = clipboard.items.map(item => ({
+                    ...item,
+                    id: Date.now() + Math.random(),
+                    subTasks: item.subTasks.map(st => ({ ...st, id: Date.now() + Math.random() }))
+                }));
+                updateTodosWithSave([...todos, ...newItems]);
+
+                if (clipboard.isCut) {
+                    setClipboard({ items: [], isCut: false });
+                }
+            };
+
+            const getFormattedDate = () => {
+                const now = new Date();
+                const yy = String(now.getFullYear()).slice(-2);
+                const mm = String(now.getMonth() + 1).padStart(2, '0');
+                const dd = String(now.getDate()).padStart(2, '0');
+                const hh = String(now.getHours()).padStart(2, '0');
+                const min = String(now.getMinutes()).padStart(2, '0');
+                return `${yy}${mm}${dd}_${hh}${min}`;
+            };
+
+            const handleExport = () => {
+                const itemsToExport = selectedIds.length > 0
+                    ? todos.filter(t => selectedIds.includes(t.id))
+                    : todos;
+
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(itemsToExport, null, 2));
+                const filename = `todos_${appTitle}_${getFormattedDate()}.json`;
+                const downloadAnchorNode = document.createElement('a');
+                downloadAnchorNode.setAttribute("href", dataStr);
+                downloadAnchorNode.setAttribute("download", filename);
+                document.body.appendChild(downloadAnchorNode);
+                downloadAnchorNode.click();
+                downloadAnchorNode.remove();
+
+                setIsSelectionMode(false);
+                setSelectedIds([]);
+            };
+
+            const handleImport = (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const importedData = JSON.parse(e.target.result);
+                        if (Array.isArray(importedData)) {
+                            const newItems = importedData.map(item => ({
+                                ...item,
+                                id: Date.now() + Math.random(),
+                                subTasks: item.subTasks.map(st => ({ ...st, id: Date.now() + Math.random() }))
+                            }));
+                            updateTodosWithSave([...todos, ...newItems]);
+                            alert(`${newItems.length}개 항목을 성공적으로 가져왔습니다.`);
+                        }
+                    } catch (err) {
+                        alert("파일 형식이 올바르지 않습니다.");
+                    }
+                };
+                reader.readAsText(file);
+                event.target.value = ''; // Reset input
+            };
+
             return (
                 <div className="todo-container">
-                    <h1>
-                        To-do List
-                        <button className="reset-data-btn" onClick={handleUpdate} title="업데이트 확인">🔄</button>
-                    </h1>
+                    <div className="header-container">
+                        {isEditingTitle ? (
+                            <input
+                                type="text"
+                                className="title-input"
+                                value={tempTitle}
+                                onChange={(e) => setTempTitle(e.target.value)}
+                                onBlur={saveTitle}
+                                onKeyPress={(e) => e.key === 'Enter' && saveTitle()}
+                                autoFocus
+                            />
+                        ) : (
+                            <h1 onClick={() => setIsEditingTitle(true)} title="클릭하여 제목 수정">
+                                {appTitle}
+                            </h1>
+                        )}
+                        <div className="header-btn-group">
+                            <button className="header-action-btn" onClick={undo} disabled={history.length === 0} title="되돌리기 (Ctrl+Z)">
+                                <span className="icon">↩️</span>
+                                <span className="label">되돌리기</span>
+                            </button>
+                            <button className="header-action-btn" onClick={redo} disabled={redoStack.length === 0} title="다시 실행 (Ctrl+Shift+Z)">
+                                <span className="icon">↪️</span>
+                                <span className="label">다시 실행</span>
+                            </button>
+                            <button className="header-action-btn" onClick={() => fileInputRef.current.click()} title="데이터 가져오기">
+                                <span className="icon">📥</span>
+                                <span className="label">가져오기</span>
+                            </button>
+                            <button className="header-action-btn" onClick={toggleSelectionMode} title="다중 선택 모드">
+                                <span className="icon">✅</span>
+                                <span className="label">선택</span>
+                            </button>
+                            <button className="header-action-btn" onClick={handleUpdate} title="업데이트 확인">
+                                <span className="icon">🔄</span>
+                                <span className="label">업데이트</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <input type="file" ref={fileInputRef} className="hidden-file-input" onChange={handleImport} accept=".json" />
+
+                    {clipboard.items.length > 0 && (
+                        <div className="clipboard-indicator">
+                            <span>📋 {clipboard.items.length}개 {clipboard.isCut ? '잘라내기됨' : '복사됨'}</span>
+                            <button className="sub-add-btn" onClick={handlePaste}>아래에 붙여넣기</button>
+                        </div>
+                    )}
+
                     <div className="input-group">
                         <input
                             type="text"
@@ -643,9 +1035,21 @@
                                 onDragEnd={handleDragEnd}
                                 onSubTaskDragStart={(e, stId) => handleSubTaskDragStart(e, todo.id, stId)}
                                 onSubTaskDrop={() => handleSubTaskDrop(todo.id)}
+                                isSelectionMode={isSelectionMode}
+                                isSelected={selectedIds.includes(todo.id)}
+                                onSelect={() => toggleSelect(todo.id)}
                             />
                         ))}
                     </div>
+
+                    {isSelectionMode && selectedIds.length > 0 && (
+                        <div className="selection-toolbar">
+                            <button className="toolbar-btn" onClick={() => handleCopy(false)}>복사</button>
+                            <button className="toolbar-btn" onClick={() => handleCopy(true)}>잘라내기</button>
+                            <button className="toolbar-btn" onClick={handleExport}>내보내기</button>
+                            <button className="toolbar-btn danger" onClick={handleBulkDelete}>삭제</button>
+                        </div>
+                    )}
 
                     {todos.length === 0 && (
                         <div className="empty-state">
@@ -661,7 +1065,8 @@
             onAddSubTask, onToggleSubTask, onDeleteSubTask,
             onDragStart, onDragOver, onDragEnd,
             onSubTaskDragStart, onSubTaskDrop,
-            onUpdateTodo, onUpdateSubTask
+            onUpdateTodo, onUpdateSubTask,
+            isSelectionMode, isSelected, onSelect
         }) {
             const [subInput, setSubInput] = useState('');
             const [showSubInput, setShowSubInput] = useState(false);
@@ -743,21 +1148,32 @@
                     onDrop={handleDrop}
                 >
                     <div
-                        className="todo-item"
-                        draggable={!showSubInput && !editing && !editingSubTaskId}
+                        className={`todo-item ${isSelected ? 'selected' : ''}`}
+                        draggable={!showSubInput && !editing && !editingSubTaskId && !isSelectionMode}
                         onDragStart={onDragStart}
                         onDragEnd={onDragEnd}
                         onTouchStart={() => handleTouchStart('main', todo.id, todo.text)}
                         onTouchEnd={handleTouchEnd}
                         onTouchMove={handleTouchEnd}
+                        onClick={isSelectionMode ? onSelect : null}
                     >
+                        {isSelectionMode && (
+                            <input
+                                type="checkbox"
+                                className="selection-check"
+                                checked={isSelected}
+                                onChange={onSelect}
+                                onClick={(e) => e.stopPropagation()}
+                            />
+                        )}
                         <input
                             type="checkbox"
                             className="todo-checkbox"
+                            style={{ left: isSelectionMode ? '50px' : '18px' }}
                             checked={todo.completed}
                             onChange={onToggle}
                         />
-                        <div className="todo-content" onClick={handleMainClick}>
+                        <div className="todo-content" style={{ margin: isSelectionMode ? '0 40px 0 72px' : '0 40px' }} onClick={handleMainClick}>
                             {editing ? (
                                 <input
                                     type="text"
