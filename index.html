@@ -275,6 +275,8 @@
             transition: all 0.2s;
             text-align: center;
             user-select: none;
+            cursor: text;
+            /* Indicaitng it's editable */
         }
 
         .todo-text.completed {
@@ -512,6 +514,26 @@
                 }));
             };
 
+            const updateTodo = (id, newText) => {
+                setTodos(todos.map(todo =>
+                    todo.id === id ? { ...todo, text: newText } : todo
+                ));
+            };
+
+            const updateSubTask = (parentId, subTaskId, newText) => {
+                setTodos(todos.map(todo => {
+                    if (todo.id === parentId) {
+                        return {
+                            ...todo,
+                            subTasks: todo.subTasks.map(st =>
+                                st.id === subTaskId ? { ...st, text: newText } : st
+                            )
+                        };
+                    }
+                    return todo;
+                }));
+            };
+
             // Drag and Drop
             const handleDragStart = (e, index) => {
                 setDraggingIndex(index);
@@ -563,9 +585,24 @@
                 setDraggingSubTask(null);
             };
 
-            const resetData = () => {
-                if (confirm("모든 데이터를 초기화하고 기본 목록으로 돌아갈까요?")) {
-                    localStorage.removeItem('todo_items');
+            const handleUpdate = async () => {
+                if ('serviceWorker' in navigator) {
+                    try {
+                        const registration = await navigator.serviceWorker.getRegistration();
+                        if (registration) {
+                            alert("GitHub에서 새로운 버전을 확인하고 업데이트합니다...");
+                            await registration.update();
+                            // If update found, worker will be replaced and we reload
+                            window.location.reload();
+                        } else {
+                            alert("업데이트 서버에 연결할 수 없습니다. 페이지를 새로고침합니다.");
+                            window.location.reload();
+                        }
+                    } catch (err) {
+                        console.error("Update failed:", err);
+                        window.location.reload();
+                    }
+                } else {
                     window.location.reload();
                 }
             };
@@ -574,7 +611,7 @@
                 <div className="todo-container">
                     <h1>
                         To-do List
-                        <button className="reset-data-btn" onClick={resetData} title="데이터 초기화">🔄</button>
+                        <button className="reset-data-btn" onClick={handleUpdate} title="업데이트 확인">🔄</button>
                     </h1>
                     <div className="input-group">
                         <input
@@ -599,6 +636,8 @@
                                 onAddSubTask={(text) => addSubTask(todo.id, text)}
                                 onToggleSubTask={(stId) => toggleSubTask(todo.id, stId)}
                                 onDeleteSubTask={(stId) => deleteSubTask(todo.id, stId)}
+                                onUpdateTodo={(newText) => updateTodo(todo.id, newText)}
+                                onUpdateSubTask={(stId, newText) => updateSubTask(todo.id, stId, newText)}
                                 onDragStart={(e) => handleDragStart(e, index)}
                                 onDragOver={(e) => handleDragOver(e, index)}
                                 onDragEnd={handleDragEnd}
@@ -621,14 +660,80 @@
             todo, index, isDragging, onToggle, onDelete,
             onAddSubTask, onToggleSubTask, onDeleteSubTask,
             onDragStart, onDragOver, onDragEnd,
-            onSubTaskDragStart, onSubTaskDrop
+            onSubTaskDragStart, onSubTaskDrop,
+            onUpdateTodo, onUpdateSubTask
         }) {
             const [subInput, setSubInput] = useState('');
             const [showSubInput, setShowSubInput] = useState(false);
+            const [editing, setEditing] = useState(false);
+            const [editValue, setEditValue] = useState(todo.text);
+            const [editingSubTaskId, setEditingSubTaskId] = useState(null);
+            const [editSubValue, setEditSubValue] = useState('');
+
+            const longPressTimer = useRef(null);
+            const isLongPress = useRef(false);
 
             const handleDrop = (e) => {
                 e.preventDefault();
                 onSubTaskDrop();
+            };
+
+            const handleTouchStart = (type, id, initialValue) => {
+                isLongPress.current = false;
+                longPressTimer.current = setTimeout(() => {
+                    isLongPress.current = true;
+                    if (type === 'main') {
+                        setEditValue(initialValue);
+                        setEditing(true);
+                    } else {
+                        setEditingSubTaskId(id);
+                        setEditSubValue(initialValue);
+                    }
+                }, 1000); // 1초 이상 꾹 누름
+            };
+
+            const handleTouchEnd = () => {
+                if (longPressTimer.current) {
+                    clearTimeout(longPressTimer.current);
+                }
+            };
+
+            const handleMainClick = () => {
+                if (!isLongPress.current) {
+                    onToggle();
+                }
+            };
+
+            const handleMainTextClick = (e) => {
+                e.stopPropagation();
+                setEditValue(todo.text);
+                setEditing(true);
+            };
+
+            const saveMainEdit = () => {
+                if (editValue.trim() && editValue !== todo.text) {
+                    onUpdateTodo(editValue);
+                }
+                setEditing(false);
+            };
+
+            const handleSubClick = (st) => {
+                if (!isLongPress.current) {
+                    onToggleSubTask(st.id);
+                }
+            };
+
+            const handleSubTextClick = (e, st) => {
+                e.stopPropagation();
+                setEditingSubTaskId(st.id);
+                setEditSubValue(st.text);
+            };
+
+            const saveSubEdit = (stId) => {
+                if (editSubValue.trim()) {
+                    onUpdateSubTask(stId, editSubValue);
+                }
+                setEditingSubTaskId(null);
             };
 
             return (
@@ -639,9 +744,12 @@
                 >
                     <div
                         className="todo-item"
-                        draggable={!showSubInput}
+                        draggable={!showSubInput && !editing && !editingSubTaskId}
                         onDragStart={onDragStart}
                         onDragEnd={onDragEnd}
+                        onTouchStart={() => handleTouchStart('main', todo.id, todo.text)}
+                        onTouchEnd={handleTouchEnd}
+                        onTouchMove={handleTouchEnd}
                     >
                         <input
                             type="checkbox"
@@ -649,10 +757,27 @@
                             checked={todo.completed}
                             onChange={onToggle}
                         />
-                        <div className="todo-content" onClick={onToggle}>
-                            <span className={`todo-text ${todo.completed ? 'completed' : ''}`}>
-                                {todo.text}
-                            </span>
+                        <div className="todo-content" onClick={handleMainClick}>
+                            {editing ? (
+                                <input
+                                    type="text"
+                                    className="todo-text"
+                                    style={{ width: '100%', border: '1px solid var(--primary)', borderRadius: '4px', padding: '2px 4px' }}
+                                    value={editValue}
+                                    onChange={(e) => setEditValue(e.target.value)}
+                                    onBlur={saveMainEdit}
+                                    onKeyPress={(e) => e.key === 'Enter' && saveMainEdit()}
+                                    autoFocus
+                                    onClick={(e) => e.stopPropagation()}
+                                />
+                            ) : (
+                                <span
+                                    className={`todo-text ${todo.completed ? 'completed' : ''}`}
+                                    onClick={handleMainTextClick}
+                                >
+                                    {todo.text}
+                                </span>
+                            )}
                         </div>
                         <div className="action-buttons">
                             <button className="icon-btn" onClick={() => setShowSubInput(!showSubInput)} title="하위 추가">
@@ -671,10 +796,13 @@
                                 <div
                                     key={st.id}
                                     className="sub-task-item"
-                                    onClick={() => onToggleSubTask(st.id)}
+                                    onClick={() => handleSubClick(st)}
                                     style={{ cursor: 'pointer' }}
-                                    draggable
+                                    draggable={!editing && !editingSubTaskId}
                                     onDragStart={(e) => onSubTaskDragStart(e, st.id)}
+                                    onTouchStart={() => handleTouchStart('sub', st.id, st.text)}
+                                    onTouchEnd={handleTouchEnd}
+                                    onTouchMove={handleTouchEnd}
                                 >
                                     <input
                                         type="checkbox"
@@ -685,18 +813,38 @@
                                             onToggleSubTask(st.id);
                                         }}
                                     />
-                                    <span style={{
-                                        flex: 1,
-                                        textDecoration: st.completed ? 'line-through' : 'none',
-                                        opacity: st.completed ? 0.6 : 1,
-                                        transition: 'all 0.2s',
-                                        whiteSpace: 'normal', /* 줄바꿈 허용 */
-                                        wordBreak: 'break-all',
-                                        marginRight: '8px',
-                                        lineHeight: '1.4'
-                                    }}>
-                                        {st.text}
-                                    </span>
+                                    {editingSubTaskId === st.id ? (
+                                        <input
+                                            type="text"
+                                            className="sub-task-input"
+                                            style={{ flex: 1, padding: '2px 4px', margin: '0 8px' }}
+                                            value={editSubValue}
+                                            onChange={(e) => setEditSubValue(e.target.value)}
+                                            onBlur={() => saveSubEdit(st.id)}
+                                            onKeyPress={(e) => e.key === 'Enter' && saveSubEdit(st.id)}
+                                            autoFocus
+                                            onClick={(e) => e.stopPropagation()}
+                                        />
+                                    ) : (
+                                        <span
+                                            onClick={(e) => handleSubTextClick(e, st)}
+                                            className="todo-text" /* Reusing cursor style */
+                                            style={{
+                                                flex: 1,
+                                                textDecoration: st.completed ? 'line-through' : 'none',
+                                                opacity: st.completed ? 0.6 : 1,
+                                                transition: 'all 0.2s',
+                                                whiteSpace: 'normal',
+                                                wordBreak: 'break-all',
+                                                marginRight: '8px',
+                                                lineHeight: '1.4',
+                                                fontSize: '0.95rem',
+                                                textAlign: 'left'
+                                            }}
+                                        >
+                                            {st.text}
+                                        </span>
+                                    )}
                                     <button
                                         className="icon-btn delete"
                                         onClick={(e) => {
