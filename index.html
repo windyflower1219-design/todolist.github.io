@@ -91,24 +91,26 @@
 
             .add-btn {
                 /* Improved Mobile Add Button */
-                padding: 0;
-                width: 54px;
-                min-width: 54px;
+                padding: 0 16px;
+                /* Restore padding for text */
+                width: auto;
+                /* Allow auto width */
+                min-width: 60px;
                 border-radius: 12px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                font-size: 1.5rem;
-                /* Larger plus sign */
+                font-size: 1.0rem;
+                /* Normal font size */
             }
 
-            /* Hide text on mobile, show icon */
+            /* Restore text on mobile, hide icon */
             .add-btn span.text {
-                display: none;
+                display: block;
             }
 
             .add-btn span.icon {
-                display: block;
+                display: none;
             }
 
             .todo-item {
@@ -143,7 +145,7 @@
 
             /* Fix for Green Box: Ensure last item isn't covered */
             .todo-list {
-                padding-bottom: 100px;
+                padding-bottom: 150px;
                 /* Space for selection toolbar */
             }
 
@@ -576,7 +578,8 @@
         /* Selection Toolbar */
         .selection-toolbar {
             position: fixed;
-            bottom: 30px;
+            bottom: 12px;
+            /* Lower position */
             left: 50%;
             transform: translateX(-50%);
             background: var(--glass-bg);
