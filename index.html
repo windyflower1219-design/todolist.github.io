@@ -575,13 +575,9 @@
             font-size: 1.2rem;
         }
 
-        /* Selection Toolbar */
+        /* Selection Toolbar - Modified for Inline Positioning */
         .selection-toolbar {
-            position: fixed;
-            bottom: 4px;
-            /* Lowered further */
-            left: 50%;
-            transform: translateX(-50%);
+            /* positioning handled by flow now, removed fixed positioning */
             background: var(--glass-bg);
             backdrop-filter: blur(12px);
             padding: 8px 16px;
@@ -591,24 +587,29 @@
             flex-direction: row;
             flex-wrap: nowrap;
             align-items: center;
+            justify-content: center;
+            /* Center buttons */
             gap: 8px;
-            z-index: 1000;
-            animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 100;
+            animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             border: 1px solid rgba(255, 255, 255, 0.3);
             white-space: nowrap;
-            max-width: 95vw;
             overflow-x: auto;
+            margin: -8px 10px 16px 10px;
+            /* Negative top margin to pull it up slightly, margin bottom for spacing */
+            position: relative;
         }
 
-        @keyframes slideUp {
+        /* Update animation for inline appearance */
+        @keyframes slideDown {
             from {
-                transform: translate(-50%, 100%);
                 opacity: 0;
+                transform: translateY(-10px);
             }
 
             to {
-                transform: translate(-50%, 0);
                 opacity: 1;
+                transform: translateY(0);
             }
         }
 
@@ -670,6 +671,39 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .clipboard-content {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .clipboard-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dismiss-btn {
+            background: transparent;
+            border: none;
+            color: #059669;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.7;
+            transition: all 0.2s;
+        }
+
+        .dismiss-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+            opacity: 1;
         }
     </style>
 </head>
@@ -1021,6 +1055,24 @@
                 event.target.value = ''; // Reset input
             };
 
+            // Calculate the ID of the last selected item in the list order
+            const lastSelectedId = React.useMemo(() => {
+                if (selectedIds.length === 0) return null;
+                // Find the last item in the current todos list that is also selected
+                let lastId = null;
+                for (let i = todos.length - 1; i >= 0; i--) {
+                    if (selectedIds.includes(todos[i].id)) {
+                        lastId = todos[i].id;
+                        break;
+                    }
+                }
+                return lastId;
+            }, [todos, selectedIds]);
+
+            const clearClipboard = () => {
+                setClipboard({ items: [], isCut: false });
+            };
+
             return (
                 <div className="todo-container">
                     <div className="header-container">
@@ -1067,8 +1119,15 @@
 
                     {clipboard.items.length > 0 && (
                         <div className="clipboard-indicator">
-                            <span>📋 {clipboard.items.length}개 {clipboard.isCut ? '잘라내기됨' : '복사됨'}</span>
-                            <button className="sub-add-btn" onClick={handlePaste}>아래에 붙여넣기</button>
+                            <div className="clipboard-content">
+                                <span>📋 {clipboard.items.length}개 {clipboard.isCut ? '잘라내기됨' : '복사됨'}</span>
+                            </div>
+                            <div className="clipboard-actions">
+                                <button className="sub-add-btn" onClick={handlePaste}>아래에 붙여넣기</button>
+                                <button className="dismiss-btn" onClick={clearClipboard} title="닫기">
+                                    ✕
+                                </button>
+                            </div>
                         </div>
                     )}
 
@@ -1088,38 +1147,38 @@
 
                     <div className="todo-list">
                         {todos.map((todo, index) => (
-                            <TodoItem
-                                key={todo.id}
-                                todo={todo}
-                                index={index}
-                                isDragging={draggingIndex === index}
-                                onToggle={() => toggleTodo(todo.id)}
-                                onDelete={() => deleteTodo(todo.id)}
-                                onAddSubTask={(text) => addSubTask(todo.id, text)}
-                                onToggleSubTask={(stId) => toggleSubTask(todo.id, stId)}
-                                onDeleteSubTask={(stId) => deleteSubTask(todo.id, stId)}
-                                onUpdateTodo={(newText) => updateTodo(todo.id, newText)}
-                                onUpdateSubTask={(stId, newText) => updateSubTask(todo.id, stId, newText)}
-                                onDragStart={(e) => handleDragStart(e, index)}
-                                onDragOver={(e) => handleDragOver(e, index)}
-                                onDragEnd={handleDragEnd}
-                                onSubTaskDragStart={(e, stId) => handleSubTaskDragStart(e, todo.id, stId)}
-                                onSubTaskDrop={() => handleSubTaskDrop(todo.id)}
-                                isSelectionMode={isSelectionMode}
-                                isSelected={selectedIds.includes(todo.id)}
-                                onSelect={() => toggleSelect(todo.id)}
-                            />
+                            <React.Fragment key={todo.id}>
+                                <TodoItem
+                                    todo={todo}
+                                    index={index}
+                                    isDragging={draggingIndex === index}
+                                    onToggle={() => toggleTodo(todo.id)}
+                                    onDelete={() => deleteTodo(todo.id)}
+                                    onAddSubTask={(text) => addSubTask(todo.id, text)}
+                                    onToggleSubTask={(stId) => toggleSubTask(todo.id, stId)}
+                                    onDeleteSubTask={(stId) => deleteSubTask(todo.id, stId)}
+                                    onUpdateTodo={(newText) => updateTodo(todo.id, newText)}
+                                    onUpdateSubTask={(stId, newText) => updateSubTask(todo.id, stId, newText)}
+                                    onDragStart={(e) => handleDragStart(e, index)}
+                                    onDragOver={(e) => handleDragOver(e, index)}
+                                    onDragEnd={handleDragEnd}
+                                    onSubTaskDragStart={(e, stId) => handleSubTaskDragStart(e, todo.id, stId)}
+                                    onSubTaskDrop={() => handleSubTaskDrop(todo.id)}
+                                    isSelectionMode={isSelectionMode}
+                                    isSelected={selectedIds.includes(todo.id)}
+                                    onSelect={() => toggleSelect(todo.id)}
+                                />
+                                {isSelectionMode && selectedIds.length > 0 && lastSelectedId === todo.id && (
+                                    <div className="selection-toolbar">
+                                        <button className="toolbar-btn" onClick={() => handleCopy(false)}>복사</button>
+                                        <button className="toolbar-btn" onClick={() => handleCopy(true)}>잘라내기</button>
+                                        <button className="toolbar-btn" onClick={handleExport}>내보내기</button>
+                                        <button className="toolbar-btn danger" onClick={handleBulkDelete}>삭제</button>
+                                    </div>
+                                )}
+                            </React.Fragment>
                         ))}
                     </div>
-
-                    {isSelectionMode && selectedIds.length > 0 && (
-                        <div className="selection-toolbar">
-                            <button className="toolbar-btn" onClick={() => handleCopy(false)}>복사</button>
-                            <button className="toolbar-btn" onClick={() => handleCopy(true)}>잘라내기</button>
-                            <button className="toolbar-btn" onClick={handleExport}>내보내기</button>
-                            <button className="toolbar-btn danger" onClick={handleBulkDelete}>삭제</button>
-                        </div>
-                    )}
 
                     {todos.length === 0 && (
                         <div className="empty-state">
