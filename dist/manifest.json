@@ -1,0 +1,22 @@
+{
+    "short_name": "TeamCard",
+    "name": "Team Card Manager",
+    "icons": [
+        {
+            "src": "icon-192.png",
+            "type": "image/png",
+            "sizes": "192x192"
+        },
+        {
+            "src": "icon-512.png",
+            "type": "image/png",
+            "sizes": "512x512"
+        }
+    ],
+    "start_url": "./",
+    "background_color": "#ffffff",
+    "display": "standalone",
+    "scope": "./",
+    "theme_color": "#6366f1",
+    "description": "팀 카드 지출 관리 및 예산 현황 모니터링 앱"
+}
